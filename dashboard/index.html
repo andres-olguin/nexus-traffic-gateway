@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nexus-Gateway | Monitor de Telemetría</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans p-8">
+  <div class="max-w-6xl mx-auto">
+    <header class="flex justify-between items-center mb-8 border-b border-slate-800 pb-4">
+      <div>
+        <h1 class="text-3xl font-bold text-cyan-400">Nexus-Gateway</h1>
+        <p class="text-slate-400 text-sm">High-Availability Traffic Orchestrator & Load Balancer</p>
+      </div>
+      <span class="px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full text-xs font-semibold">GATEWAY ACTIVE</span>
+    </header>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl">
+        <h3 class="text-slate-400 text-sm mb-1">Nodo 01 (Port 3001)</h3>
+        <p id="status-3001" class="text-xl font-semibold text-amber-400">Comprobando...</p>
+        <span id="latency-3001" class="text-xs text-slate-500">Latencia: --</span>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl">
+        <h3 class="text-slate-400 text-sm mb-1">Nodo 02 (Port 3002)</h3>
+        <p id="status-3002" class="text-xl font-semibold text-amber-400">Comprobando...</p>
+        <span id="latency-3002" class="text-xs text-slate-500">Latencia: --</span>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl">
+        <h3 class="text-slate-400 text-sm mb-1">Nodo 03 (Port 3003 - Failover)</h3>
+        <p id="status-3003" class="text-xl font-semibold text-amber-400">Comprobando...</p>
+        <span id="latency-3003" class="text-xs text-slate-500">Latencia: --</span>
+      </div>
+    </div>
+
+    <div class="bg-slate-900 border border-slate-800 p-6 rounded-xl">
+      <h2 class="text-lg font-semibold text-slate-200 mb-4">Prueba de Petición Dinámica al Gateway</h2>
+      <button onclick="sendRequest()" class="px-5 py-2.5 bg-cyan-600 hover:bg-cyan-500 font-medium rounded-lg transition-all text-sm">Procesar Transacción</button>
+
+      <div class="mt-6 bg-slate-950 p-4 rounded-lg font-mono text-sm border border-slate-800">
+        <pre id="output" class="text-cyan-300">// Presiona el botón para enrutar una petición a través del API Gateway...</pre>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function checkHealth(port, elementId, latencyId) {
+      const start = Date.now();
+      try {
+        const res = await fetch(`http://localhost:${port}/api/v1/health`);
+        const duration = Date.now() - start;
+        if (res.ok) {
+          document.getElementById(elementId).innerText = "ONLINE";
+          document.getElementById(elementId).className = "text-xl font-semibold text-emerald-400";
+          document.getElementById(latencyId).innerText = `Latencia: ${duration}ms`;
+        } else {
+          throw new Error();
+        }
+      } catch {
+        document.getElementById(elementId).innerText = "OFFLINE";
+        document.getElementById(elementId).className = "text-xl font-semibold text-rose-500";
+        document.getElementById(latencyId).innerText = "Latencia: N/A";
+      }
+    }
+
+    async function sendRequest() {
+      const out = document.getElementById('output');
+      try {
+        const res = await fetch('http://localhost/api/v1/data');
+        const data = await res.json();
+        out.innerText = JSON.stringify(data, null, 2);
+      } catch (err) {
+        out.innerText = "// Error: El Gateway o los nodos no responden.";
+      }
+    }
+
+    setInterval(() => {
+      checkHealth(3001, 'status-3001', 'latency-3001');
+      checkHealth(3002, 'status-3002', 'latency-3002');
+      checkHealth(3003, 'status-3003', 'latency-3003');
+    }, 2000);
+  </script>
+</body>
+</html>
