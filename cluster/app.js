@@ -6,6 +6,16 @@ const NODE_ID = process.env.NODE_ID || `Nexus-Node-${PORT}`;
 
 app.use(express.json());
 
+// Permite CORS para que el dashboard web pueda consultar los nodos directamente
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, x-api-key');
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
 // Middleware de API Key Security
 app.use((req, res, next) => {
   const apiKey = req.headers['x-api-key'];
